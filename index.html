@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="BCS-745d30bf.png">
+    <!-- TITRE MIS À JOUR POUR NETLIFY -->
+    <title>Barclays Banque - Espace Client</title>
+    <!-- Inclure Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuration des polices et des classes personnalisées pour Tailwind -->
+    <style>
+        .font-sans {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .font-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        /* Style de base pour les transitions */
+        .animate-in {
+            animation-name: fadeIn;
+            animation-duration: 0.3s;
+            animation-fill-mode: both;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .slide-in-from-top-4 {
+            animation-name: slideInTop;
+        }
+        @keyframes slideInTop {
+            from { transform: translateY(-1rem); }
+            to { transform: translateY(0); }
+        }
+        .slide-in-from-bottom-4 {
+            animation-name: slideInBottom;
+        }
+        @keyframes slideInBottom {
+            from { transform: translateY(1rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .zoom-in-95 {
+            animation-name: zoomIn;
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        /* Simulation de l'icône de Contactless */
+        .contactless-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Fix pour les écrans mobiles pour que la nav n'obstrue pas le contenu */
+        @media (max-width: 767px) {
+            .main-content {
+                padding-bottom: 70px; /* Espace pour la barre de navigation inférieure */
+            }
+        }
+        
+        /* Loading spinner for the transfer */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Rend les lignes de transaction cliquables */
+        .transaction-row {
+            cursor: pointer;
+        }
+    </style>
+    <!-- Inclure React et ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Inclure Babel pour la compilation JSX dans le navigateur -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ==========================================
+        // SIMULATION DES ICONES LUCIDE-REACT
+        // ==========================================
+        const Bell = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.8 12.3a4.5 4.5 0 0 0-4.5-4.5H9.7a4.5 4.5 0 0 0-4.5 4.5v1.2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1.2zm-4.3 8a2 2 0 0 1-4 0"/></svg>;
+        const LogOut = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+        const Home = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        const ArrowRightLeft = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 11 20 14 17 17"/><line x1="4" y1="14" x2="20" y2="14"/><polyline points="7 7 4 10 7 13"/><line x1="20" y1="10" x2="4" y2="10"/></svg>;
+        const CreditCard = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
+        const X = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+        const Landmark = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><path d="M4 14.897V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10.897M12 2l4 3.5M12 2l-4 3.5M9 8h6M6 18h12"/></svg>;
+        const CheckCircle = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const Settings = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1 0-2.73l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const TrendingUp = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
+        const Download = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const Eye = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const EyeOff = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a1.8 1.8 0 0 1-.3-1"/><path d="M22 12s-3 7-10 7a9.7 9.7 0 0 1-5.06-1.07"/><line x1="2" y1="2" x2="22" y2="22"/><path d="M10.16 10.16c.32-.32.74-.5 1.2-.5.9 0 1.63.73 1.63 1.63 0 .46-.18.88-.5 1.2M12 7.7a3 3 0 0 0-3 3"/></svg>;
+        const Mail = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>;
+        const Phone = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-5.6-5.6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.08 2h3a2 2 0 0 1 2 1.73c.04.54.05 1.07.03 1.62-.05.74-.27 1.44-.57 2.15l-.36.81c-.29.69-.19 1.48.24 2.1l3.65 3.65c.61.42 1.4.52 2.1.24l.81-.36c.7-.3 1.41-.52 2.15-.57a2 2 0 0 1 1.72.03c.55-.02 1.08-.01 1.62.03a2 2 0 0 1 1.73 2z"/></svg>;
+
+        // ==========================================
+        // DONNÉES FICTIVES INITIALES
+        // ==========================================
+        const INITIAL_DATA = {
+            bankName: "BARCLAYS",
+            user: {
+                name: "Jean Louis Renault", // Nom mis à jour
+                loginId: "7897620168",
+                password: "548521"
+            },
+            initialBalance: 510000, // Solde mis à jour
+            initialTransactions: [
+                { id: 1, date: '15/10/2025', recipient: 'Blockchain', account: '********', amount: 510000, type: 'credit', description: 'Transfert de placements' },
+            ],
+            notificationMessage: `
+                Information Importante
+
+                1. 510 000 euros ont été générés à la suite de placements effectués sur les marchés.
+                En l’absence d’une infrastructure de gestion d’actifs numériques dédiée,
+                les produits financiers ont été provisoirement centralisés auprès de la banque Barclays, avant d’être transférés sur votre compte.
+            `,
+            contactDetails: {
+                email: "serviceclients@mail.com",
+                phone: "+33644672929" 
+            }
+        };
+
+        const formatCurrency = (amount) => {
+            const displayAmount = Math.abs(amount);
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(displayAmount);
+        };
+
+        const formatCardNumber = (number) => {
+            const visible = number.slice(-4);
+            const hidden = '•••• •••• •••• ';
+            return hidden + visible;
+        };
+        
+        const downloadReceipt = (transaction, bankName, userName) => {
+            const isCredit = transaction.amount >= 0 && transaction.type === 'credit';
+            const sign = isCredit ? 'Crédit' : 'Débit';
+            const amount = formatCurrency(transaction.amount);
+            const type = isCredit ? 'Entrant' : 'Sortant';
+            
+            const receiptContent = `
+========================================
+REÇU DE TRANSACTION
+Banque : ${bankName}
+Client : ${userName}
+Date d'édition : ${new Date().toLocaleDateString('fr-FR')}
+========================================
+Type de Mouvement : ${sign}
+Date de Transaction : ${transaction.date}
+Montant : ${amount}
+Destinataire/Émetteur : ${transaction.recipient}
+Compte : ${transaction.account}
+Nature : ${transaction.description} (${type})
+Réf. Transaction : ${transaction.id}
+========================================
+Ceci est un reçu généré électroniquement.
+`;
+            const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const fileName = `Reçu_${sign}_${transaction.date.replace(/\//g, '-')}_${transaction.id}.txt`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // ==========================================
+        // SOUS-COMPOSANTS
+        // ==========================================
+        
+        function SuccessToast({ message, onClose }) {
+            React.useEffect(() => {
+                const timer = setTimeout(() => {
+                    onClose();
+                }, 4000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            return (
+                <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-3 bg-green-600 text-white p-4 rounded-xl shadow-2xl shadow-green-600/30">
+                        <CheckCircle className="w-6 h-6" />
+                        <span className="font-medium">{message}</span>
+                        <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 ml-2">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        function ContactManagerModal({ isOpen, onClose, email, phone }) {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300" onClick={onClose}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-sm animate-in zoom-in-95 slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+                            <h3 className="font-bold text-lg">Contact Gestionnaire</h3>
+                            <button onClick={onClose} className="p-1 rounded-full hover:bg-white/20">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-slate-700 mb-4 font-medium text-center">Veuillez contacter votre gestionnaire</p>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <Mail className="w-5 h-5 text-sky-500" />
+                                    <a href={`mailto:${email}`} className="text-sky-600 hover:underline font-mono">{email}</a>
+                                </div>
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <Phone className="w-5 h-5 text-sky-500" />
+                                    <a href={`tel:${phone.replace(/\s/g, '')}`} className="text-sky-600 hover:underline font-mono">{phone}</a>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-4 text-center">Nous vous répondrons dans les plus brefs délais.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        function ReceiptModal({ isOpen, onClose, transaction, bankName, userName }) {
+            if (!isOpen || !transaction) return null;
+            const isCredit = transaction.amount >= 0 && transaction.type === 'credit';
+            const movementType = isCredit ? 'Crédit' : 'Débit';
+            const flowType = isCredit ? 'Entrant' : 'Sortant';
+            const amountColor = isCredit ? 'text-green-600' : 'text-red-600';
+            const DetailsRow = ({ label, value, monospace = false, color = 'text-slate-800' }) => (
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">{label}</span>
+                    <span className={`font-medium ${monospace ? 'font-mono' : ''} ${color}`}>{value}</span>
+                </div>
+            );
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300" onClick={onClose}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+                            <h3 className="font-bold text-lg">Reçu de Transaction</h3>
+                            <button onClick={onClose} className="p-1 rounded-full hover:bg-white/20">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <div className="text-center mb-6">
+                                <p className="text-sm text-slate-500">{bankName}</p>
+                                <p className="text-2xl font-bold mb-1">{isCredit ? '+' : '-'} {formatCurrency(transaction.amount)}</p>
+                                <span className={`text-sm font-semibold ${amountColor}`}>{movementType} {flowType}</span>
+                            </div>
+                            <div className="space-y-1 text-sm bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                <DetailsRow label="Réf. Transaction" value={transaction.id} monospace={true} />
+                                <DetailsRow label="Date de transaction" value={transaction.date} />
+                                <DetailsRow label="Type de mouvement" value={movementType} />
+                                <DetailsRow label="Partie Opposée" value={transaction.recipient} />
+                                <DetailsRow label="Compte Associé" value={transaction.account} monospace={true} />
+                                <DetailsRow label="Description" value={transaction.description} color='text-slate-600' />
+                                <DetailsRow label="Titulaire du Compte" value={userName} />
+                            </div>
+                            <button onClick={() => downloadReceipt(transaction, bankName, userName)} className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-green-500/30 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+                                <Download className="w-5 h-5" /> Télécharger le reçu (TXT)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LoginPage({ onLoginSuccess, correctLogin, bankName }) {
+            const [loginId, setLoginId] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [error, setError] = React.useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (loginId === correctLogin.loginId && password === correctLogin.password) {
+                    onLoginSuccess();
+                } else {
+                    setError("Identifiants incorrects. Veuillez réessayer.");
+                }
+            };
+
+            return (
+                <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-sky-100 to-white p-4">
+                    <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden">
+                        <div className="bg-sky-500 p-6 text-center">
+                            <div className="inline-block p-3 rounded-full bg-white/20 mb-2">
+                                <Landmark className="text-white w-8 h-8" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-white tracking-wider">{bankName}</h1>
+                            <p className="text-sky-100 text-sm mt-1">Accès Sécurisé</p>
+                        </div>
+                        <div className="p-8">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 mb-1">Identifiant</label>
+                                    <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all bg-slate-50 focus:bg-white" placeholder="Entrez votre identifiant" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 mb-1">Mot de passe</label>
+                                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all bg-slate-50 focus:bg-white" placeholder="••••••" required />
+                                </div>
+                                {error && <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center"><span className="mr-2">⚠️</span> {error}</div>}
+                                <button type="submit" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-500/30 transition-all transform active:scale-[0.98]">Se connecter</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Header({ userName, bankName, onLogout, onToggleNotification, notificationActive }) {
+            return (
+                <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-3 md:px-6 flex justify-between items-center shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-sky-500 p-1.5 rounded-lg"><Landmark className="text-white w-5 h-5" /></div>
+                        <span className="font-bold text-xl text-sky-600 tracking-tight">{bankName}</span>
+                    </div>
+                    <div className="flex items-center gap-3 md:gap-6">
+                        <span className="hidden md:block text-sm font-medium text-slate-600">Bonjour, <span className="text-slate-900 font-bold">{userName}</span></span>
+                        <button onClick={onToggleNotification} className={`relative p-2 rounded-full transition-colors ${notificationActive ? 'bg-sky-50 text-sky-600' : 'hover:bg-slate-100 text-slate-500'}`}>
+                            <Bell className="w-5 h-5" />
+                            {notificationActive && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>}
+                        </button>
+                        <button onClick={onLogout} className="flex items-center gap-2 text-slate-500 hover:text-red-500 transition-colors text-sm font-medium">
+                            <span className="hidden md:inline">Déconnexion</span>
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                </header>
+            );
+        }
+
+        function NotificationPanel({ message, onClose }) {
+            const lines = message.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            return (
+                <div className="absolute top-16 right-4 md:right-6 z-30 w-full max-w-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="bg-white rounded-xl shadow-xl border border-sky-100 overflow-hidden">
+                        <div className="bg-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+                            <h3 className="font-bold text-lg">Information Importante</h3>
+                            <button onClick={onClose} className="p-1 rounded-full hover:bg-white/20"><X className="w-4 h-4" /></button>
+                        </div>
+                        <div className="p-4 bg-sky-50/50">
+                            {lines.map((line, index) => (
+                                <p key={index} className={`text-sm text-slate-700 leading-relaxed ${line.startsWith('1.') || line.startsWith('2.') ? 'font-semibold mt-2' : 'ml-3'}`}>{line}</p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Navigation({ currentView, setCurrentView }) {
+            const navItems = [
+                { id: 'dashboard', label: 'Tableau de bord', icon: Home },
+                { id: 'transfer', label: 'Virement', icon: ArrowRightLeft },
+                { id: 'card', label: 'Carte', icon: CreditCard },
+                { id: 'loan', label: 'Prêt', icon: TrendingUp },
+                { id: 'settings', label: 'Réglage', icon: Settings },
+            ];
+            return (
+                <nav className="md:w-64 bg-white border-r border-slate-200 flex md:flex-col justify-around md:justify-start fixed bottom-0 w-full md:relative md:h-auto z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none p-2 md:p-4 gap-1 md:gap-2">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentView === item.id;
+                        return (
+                            <button key={item.id} onClick={() => setCurrentView(item.id)} className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-lg transition-all w-full md:text-left text-xs md:text-sm font-medium ${isActive ? 'text-sky-600 bg-sky-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+                                <Icon className={`w-6 h-6 md:w-5 md:h-5 mb-1 md:mb-0 ${isActive ? 'stroke-[2.5px]' : ''}`} />
+                                <span>{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
+            );
+        }
+
+        function DashboardView({ balance, transactions, onShowContactModal, onShowReceipt, showBalance, toggleBalanceVisibility }) {
+            return (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="bg-gradient-to-r from-sky-500 to-sky-600 rounded-2xl p-6 text-white shadow-lg shadow-sky-500/20 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-32 blur-2xl"></div>
+                        <div className="relative z-10">
+                            <h2 className="text-sky-100 text-sm font-medium mb-1">Solde disponible</h2>
+                            <div className="flex items-center justify-between"> 
+                                <p className="text-4xl font-bold mb-4">{showBalance ? formatCurrency(balance) : '•••••••••'}</p>
+                                <button onClick={toggleBalanceVisibility} className="p-2 -mt-4 rounded-full text-sky-100 hover:text-white hover:bg-white/10 transition-colors">
+                                    {showBalance ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between bg-white/10 rounded-lg p-3 backdrop-blur-sm">
+                                <div>
+                                    <p className="text-xs text-sky-100">IBAN</p>
+                                    <p className="font-mono text-sm">FR76 BARC 2000 1000 1234 5678 901</p>
+                                </div>
+                                <CreditCard className="w-6 h-6 text-sky-200" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-center">
+                        <button onClick={onShowContactModal} className="flex items-center justify-center gap-2 text-sky-600 hover:text-sky-700 font-semibold p-3 rounded-xl transition-colors border border-sky-200 bg-sky-50/50 hover:bg-sky-100 mx-auto">
+                            <Phone className="w-5 h-5" /> Contacter gestionnaire
+                        </button>
+                    </div>
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-semibold text-slate-700">Historique des transactions</h3>
+                            <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-1 rounded-full">Ce mois</span>
+                        </div>
+                        <ul className="divide-y divide-slate-100">
+                            {transactions.slice().sort((a, b) => b.id - a.id).map(tx => {
+                                const isCredit = tx.amount >= 0 && tx.type === 'credit';
+                                return (
+                                    <li key={tx.id} className="px-6 py-4 hover:bg-sky-50 transition-colors flex items-center justify-between group transaction-row" onClick={() => onShowReceipt(tx)}>
+                                        <div className="flex items-start gap-4">
+                                            <div className={`p-2 rounded-full ${isCredit ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                <ArrowRightLeft className={`w-5 h-5 ${isCredit ? 'rotate-180' : ''}`} />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-900">{tx.recipient}</p>
+                                                <p className="text-sm text-slate-500 font-mono">{tx.account}</p>
+                                                {tx.description && <p className="text-xs text-slate-400 mt-0.5 italic">{tx.description}</p>} 
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>{isCredit ? '+' : '-'} {formatCurrency(tx.amount)}</p>
+                                            <p className="text-xs text-slate-400">{tx.date}</p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                </div>
+            );
+        }
+
+        function TransferView({ onTransferSuccess }) {
+            const [formData, setFormData] = React.useState({ name: '', iban: '', amount: '', description: '' });
+            const [message, setMessage] = React.useState(null);
+            const [isLoading, setIsLoading] = React.useState(false); 
+
+            const handleChange = (e) => {
+                const value = e.target.name === 'amount' ? Math.abs(parseFloat(e.target.value) || 0) : e.target.value;
+                setFormData({ ...formData, [e.target.name]: value });
+                setMessage(null); 
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                const amountVal = parseFloat(formData.amount);
+                if(!formData.name || !formData.iban || !formData.amount || amountVal <= 0) {
+                    setMessage({ type: 'error', text: "Veuillez remplir correctement tous les champs obligatoires." });
+                    return;
+                }
+                
+                setIsLoading(true);
+                // Chargement pendant 7 secondes
+                await new Promise(resolve => setTimeout(resolve, 7000));
+                
+                // Exécuter le transfert
+                onTransferSuccess(formData.name, formData.iban, amountVal, formData.description);
+                
+                setIsLoading(false);
+                setMessage({ type: 'success', text: "Virement effectué" });
+                setFormData({ name: '', iban: '', amount: '', description: '' });
+            };
+
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><ArrowRightLeft className="text-sky-500" /> Nouveau virement</h2>
+                        <p className="text-slate-500 text-sm">Remplissez les informations du bénéficiaire ci-dessous.</p>
+                    </div>
+                    
+                    {message && (
+                        <div className={`mb-6 p-4 rounded-lg text-sm border ${message.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'}`}>
+                            {message.text.split('\n').map((line, i) => <p key={i} className="leading-relaxed font-semibold">{line}</p>)}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="grid md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">Nom du bénéficiaire *</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all" required disabled={isLoading} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">IBAN du bénéficiaire *</label>
+                                <input type="text" name="iban" value={formData.iban} onChange={handleChange} placeholder="FR76...." className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all" required disabled={isLoading} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Montant (€) *</label>
+                            <div className="relative">
+                                <input type="number" name="amount" value={formData.amount} onChange={handleChange} min="0.01" step="0.01" className="w-full pl-4 pr-12 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all text-lg font-medium text-slate-900" required disabled={isLoading} />
+                                <span className="absolute right-4 top-3.5 text-slate-400 font-bold">EUR</span>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Description (Optionnel)</label>
+                            <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all" disabled={isLoading} />
+                        </div>
+                        <div className="pt-4">
+                            <button type="submit" className="w-full md:w-auto bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-sky-500/20 transition-all transform active:scale-[0.98] disabled:bg-sky-400 flex items-center justify-center gap-3" disabled={isLoading}>
+                                {isLoading ? <><div className="spinner"></div><span>Traitement...</span></> : <span>Valider le virement</span>}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            );
+        }
+
+        function CardView({ userName }) {
+            const encryptedCardNumber = formatCardNumber("4970102345678910");
+            return (
+                <div className="animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-6">Votre Carte Bancaire</h2>
+                    <div className="flex flex-col items-center">
+                        <div className="w-full max-w-[380px] aspect-[1.586] rounded-2xl p-6 relative text-white shadow-2xl overflow-hidden transform transition-transform hover:scale-105 duration-300 group">
+                            <div className="absolute inset-0 bg-gradient-to-bl from-[#2c3e50] to-[#000000] z-0"></div>
+                            <div className="absolute -top-20 -right-20 w-60 h-60 bg-sky-500 rounded-full blur-[60px] opacity-40"></div>
+                            <div className="relative z-10 h-full flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div className="w-12 h-9 bg-gradient-to-br from-yellow-200 to-yellow-500 rounded-md border border-yellow-600/50 flex items-center justify-center relative shadow-sm">
+                                        <div className="w-4 h-4 border border-yellow-800/40 rounded-sm"></div>
+                                    </div>
+                                    <svg className="w-6 h-6 opacity-80 contactless-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg>
+                                </div>
+                                <div className="mt-4"><div className="text-xl md:text-2xl font-mono tracking-widest drop-shadow-md">{encryptedCardNumber}</div></div>
+                                <div className="flex justify-between items-end mt-auto">
+                                    <div className="flex flex-col"><span className="text-[10px] uppercase text-slate-300 mb-0.5">Titulaire</span><span className="font-medium uppercase text-sm md:text-base truncate max-w-[200px]">{userName}</span></div>
+                                    <div className="flex flex-col items-center mr-4"><span className="text-[8px] uppercase text-slate-300">Expires</span><span className="font-mono text-sm">11/28</span></div>
+                                    <div className="italic font-bold text-2xl tracking-tighter leading-none">VISA<span className="block text-[8px] not-italic font-normal text-right">Premium</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full max-w-md">
+                            <h3 className="font-semibold text-slate-800 mb-4">Détails de la carte</h3>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Statut</span><span className="text-green-600 font-medium flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> Active</span></div>
+                                <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Type</span><span className="text-slate-800">Débit immédiat</span></div>
+                                <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500">Plafond hebdomadaire</span><span className="text-slate-800 font-mono">5 000,00 €</span></div>
+                            </div>
+                            <button className="mt-6 w-full py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">Faire opposition</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LoanView() {
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><TrendingUp className="text-sky-500" /> Nos Services de Prêt</h2>
+                    <p className="text-slate-500 mb-6">Financez vos projets avec nos solutions de financement flexibles et avantageuses.</p>
+                    <div className="space-y-4">
+                        {['Prêt Immobilier', 'Prêt Auto/Moto', 'Prêt Personnel'].map((loan, i) => (
+                            <div key={i} className="p-4 bg-sky-50 rounded-lg border border-sky-100"><h3 className="font-semibold text-sky-800">{loan}</h3><p className="text-sm text-sky-700">Taux compétitifs et solutions adaptées.</p></div>
+                        ))}
+                    </div>
+                    <button className="mt-8 w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-500/30 transition-all">Faire une simulation</button>
+                </div>
+            );
+        }
+
+        function SettingsView() {
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Settings className="text-sky-500" /> Réglages</h2>
+                    <div className="space-y-6">
+                        <div className="border border-slate-100 rounded-lg p-4"><h3 className="font-semibold text-slate-800 mb-2">Sécurité</h3><ul className="text-sm space-y-2"><li className="flex justify-between items-center py-1"><span>Changer le mot de passe</span><span className="text-sky-500 cursor-pointer">Gérer</span></li></ul></div>
+                        <div className="border border-slate-100 rounded-lg p-4"><h3 className="font-semibold text-slate-800 mb-2">Notifications</h3><ul className="text-sm space-y-2"><li className="flex justify-between items-center py-1"><span>Notifications Push</span><span className="text-green-500">Activées</span></li></ul></div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+            const [balance, setBalance] = React.useState(() => parseFloat(localStorage.getItem('barclays_balance')) || INITIAL_DATA.initialBalance);
+            const [transactions, setTransactions] = React.useState(() => JSON.parse(localStorage.getItem('barclays_transactions')) || INITIAL_DATA.initialTransactions);
+            const [currentView, setCurrentView] = React.useState('dashboard');
+            const [showNotification, setShowNotification] = React.useState(false);
+            const [showContactModal, setShowContactModal] = React.useState(false);
+            const [showReceiptModal, setShowReceiptModal] = React.useState(false);
+            const [selectedTransaction, setSelectedTransaction] = React.useState(null);
+            const [showBalance, setShowBalance] = React.useState(true);
+
+            React.useEffect(() => {
+                localStorage.setItem('barclays_balance', balance.toString());
+                localStorage.setItem('barclays_transactions', JSON.stringify(transactions));
+            }, [balance, transactions]);
+
+            const handleTransferSuccess = (name, iban, amount, description) => {
+                const newTx = {
+                    id: transactions.length + 1,
+                    date: new Date().toLocaleDateString('fr-FR'),
+                    recipient: name,
+                    account: iban,
+                    amount: amount,
+                    type: 'debit',
+                    description: description || 'Virement sortant'
+                };
+                setBalance(prev => prev - amount);
+                setTransactions(prev => [...prev, newTx]);
+            };
+
+            if (!isLoggedIn) return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} correctLogin={INITIAL_DATA.user} bankName={INITIAL_DATA.bankName} />;
+
+            return (
+                <div className="dashboard-container flex flex-col h-screen bg-slate-50 font-sans text-slate-700">
+                    <Header userName={INITIAL_DATA.user.name} bankName={INITIAL_DATA.bankName} onLogout={() => setIsLoggedIn(false)} onToggleNotification={() => setShowNotification(!showNotification)} notificationActive={showNotification} />
+                    {showNotification && <NotificationPanel message={INITIAL_DATA.notificationMessage} onClose={() => setShowNotification(false)} />}
+                    {showContactModal && <ContactManagerModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} email={INITIAL_DATA.contactDetails.email} phone={INITIAL_DATA.contactDetails.phone} />}
+                    {showReceiptModal && <ReceiptModal isOpen={showReceiptModal} onClose={() => { setShowReceiptModal(false); setSelectedTransaction(null); }} transaction={selectedTransaction} bankName={INITIAL_DATA.bankName} userName={INITIAL_DATA.user.name} />}
+                    <div className="flex flex-1 overflow-hidden">
+                        <Navigation currentView={currentView} setCurrentView={setCurrentView} />
+                        <main className="main-content flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
+                            <div className="max-w-4xl mx-auto">
+                                {currentView === 'dashboard' && <DashboardView balance={balance} transactions={transactions} onShowContactModal={() => setShowContactModal(true)} onShowReceipt={(tx) => { setSelectedTransaction(tx); setShowReceiptModal(true); }} showBalance={showBalance} toggleBalanceVisibility={() => setShowBalance(!showBalance)} />}
+                                {currentView === 'transfer' && <TransferView onTransferSuccess={handleTransferSuccess} />}
+                                {currentView === 'card' && <CardView userName={INITIAL_DATA.user.name} />}
+                                {currentView === 'loan' && <LoanView />}
+                                {currentView === 'settings' && <SettingsView />}
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
