@@ -114,11 +114,11 @@
         const INITIAL_DATA = {
             bankName: "BARCLAYS",
             user: {
-                name: "Jean Louis Renault", // Nom mis à jour
+                name: "Jean Louis Renault", 
                 loginId: "7897620168",
                 password: "548521"
             },
-            initialBalance: 510000, // Solde mis à jour
+            initialBalance: 510000, 
             initialTransactions: [
                 { id: 1, date: '15/10/2025', recipient: 'Blockchain', account: '********', amount: 510000, type: 'credit', description: 'Transfert de placements' },
             ],
@@ -210,7 +210,7 @@ Ceci est un reçu généré électroniquement.
             if (!isOpen) return null;
             return (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300" onClick={onClose}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-sm animate-in zoom-in-95 slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-in zoom-in-95 slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
                         <div className="bg-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
                             <h3 className="font-bold text-lg">Contact Gestionnaire</h3>
                             <button onClick={onClose} className="p-1 rounded-full hover:bg-white/20">
@@ -395,6 +395,9 @@ Ceci est un reçu généré électroniquement.
                     <div className="bg-gradient-to-r from-sky-500 to-sky-600 rounded-2xl p-6 text-white shadow-lg shadow-sky-500/20 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-32 blur-2xl"></div>
                         <div className="relative z-10">
+                            {/* SALUTATION AJOUTÉE ICI */}
+                            <p className="text-white/90 text-lg font-semibold mb-2 drop-shadow-sm">Bonjour, Jean Louis Renault</p>
+                            
                             <h2 className="text-sky-100 text-sm font-medium mb-1">Solde disponible</h2>
                             <div className="flex items-center justify-between"> 
                                 <p className="text-4xl font-bold mb-4">{showBalance ? formatCurrency(balance) : '•••••••••'}</p>
